@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DÍVEJ TO - Sledujte seriály online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Pro plynulé posouvání v rámci modálního okna */
+        .episode-view {
+            scroll-behavior: smooth;
+        }
+        /* Skrytí posuvníku, ale ponechání funkčnosti */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* Vlastní posuvník pro seznam epizod */
+        .episode-view::-webkit-scrollbar {
+            width: 8px;
+        }
+        .episode-view::-webkit-scrollbar-track {
+            background: #2d2d2d;
+            border-radius: 10px;
+        }
+        .episode-view::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 10px;
+        }
+        .episode-view::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#3b82f6', // Naše nová 'cool' barva
+                            dark: '#141414',
+                            darker: '#000'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-darker text-white font-sans antialiased">
+
+    <!-- Navigační lišta -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 p-4 md:px-10 transition-colors duration-500">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <!-- Logo -->
+                <h1 class="text-3xl font-bold text-blue-500">DÍVEJ TO</h1>
+                
+                <!-- Navigační odkazy (Desktop) -->
+                <div class="hidden md:flex space-x-4">
+                    <a href="#" class="font-semibold text-white hover:text-gray-300">Domů</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Seriály</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Filmy</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Nové a populární</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Můj seznam</a>
+                </div>
+            </div>
+            
+            <!-- Ikony vpravo -->
+            <div class="flex items-center space-x-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <img src="https://placehold.co/32x32/3b82f6/white?text=P" alt="Profil" class="rounded">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hlavní banner (Hero) -->
+    <header class="relative h-[60vh] md:h-[95vh] w-full">
+        <!-- Pozadí -->
+        <img src="https://image.tmdb.org/t/p/original/t5zCBSB5xMDKS31vlTslWNCSns9.jpg" 
+             onerror="this.onerror=null; this.src='https://www.edna.cz/runtime/userfiles/series/dexter/Bez-nazvu-86f5331542b22f641d0bb0d401f65c22.png';"
+             alt="Banner Dexter" 
+             class="absolute inset-0 w-full h-full object-cover -z-10">
+        <!-- Překrytí stínem -->
+        <div class="absolute inset-0 bg-gradient-to-t from-brand-darker via-transparent to-black/60"></div>
+        <div class="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-brand-darker to-transparent"></div>
+
+        <!-- Obsah banneru -->
+        <div class="absolute bottom-[10%] md:bottom-[20%] left-4 md:left-10 z-10 max-w-xl">
+            <h2 class="text-5xl md:text-7xl font-extrabold drop-shadow-lg">DEXTER</h2>
+            <p class="text-lg text-gray-200 mt-4 mb-6 drop-shadow-md max-w-prose">
+                Sledujte příběh Dextera Morgana, specialisty na krevní stopy u policie v Miami, který je ve svém volném čase sériový vrah.
+            </p>
+            <div class="flex space-x-4">
+                <button id="play-dexter-btn" class="flex items-center justify-center px-6 py-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition duration-300 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8.006v3.989a1 1 0 001.555.837l3.222-1.994a1 1 0 000-1.674l-3.222-1.995z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="font-semibold text-lg">Přehrát</span>
+                </button>
+                <button class="flex items-center justify-center px-6 py-3 rounded-md bg-zinc-700/80 text-white hover:bg-zinc-600/80 transition duration-300 shadow-lg backdrop-blur-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="font-semibold text-lg">Více informací</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sekce s obsahem (Řádky) -->
+    <main class="py-10 -mt-[5vh] z-20 relative px-4 md:px-10 space-y-12">
+        <!-- Řádek 1 -->
+        <section>
+            <h3 class="text-2xl font-semibold mb-4">Populární</h3>
+            <div class="flex space-x-3 overflow-x-auto overflow-y-hidden hide-scrollbar pb-4">
+                <!-- Karta filmu/seriálu -->
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <a href="#" class="movie-play-link" data-title="Halloween 2018" data-video-src="https://pf-storage4.premiumcdn.net/151766109/71afDaHadfK2i0jtGgf59HbAUvQcrgfEXuMlIQWI32Im8Tbzso7UW8CyxfBluW4FJEF07fBVtR8SzBs1ruO7uLBIoVcy0TYXSWauMQT4Ws7vsjAIJkS0g.mp4?token=9Kv3tL7YfAqC&expires=1762889429&sparams=token%2Cpath%2Cexpires&signature=fbb581a25844b069904b1b755ae47c692d20d3c0">
+                        <img src="https://image.tmdb.org/t/p/w500/uDnflr1TqFpAG2nEvD1n0b97s46.jpg" onerror="this.onerror=null; this.src='https://image.pmgstatic.com/cache/resized/w663/files/images/film/posters/165/896/165896913_17735d.jpg';" alt="Film 1" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </a>
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <a href="#" class="movie-play-link" data-title="Halloween Zabíjí" data-video-src="https://pf-storage5.premiumcdn.net/29462768/2dvt9gi5OIAQi10CMPTOQi7dcqeHMoH24tNKH8vIyEuKyTd7sMDcwZcOEtLQU58TnVH6ntLPCgocojtKqI0BUJnSnJfjqhXET0XFWySnGc8LcEmFADupy.mp4?token=9Kv3tL7YfAqC&expires=1762889253&sparams=token%2Cpath%2Cexpires&signature=a1355132523e100dff2b43f1278a56b8cee40fd5">
+                        <img src="https://image.tmdb.org/t/p/w500/1XS1oqL89BABPhJhRyWc11Mebf.jpg" onerror="this.onerror=null; this.src='https://image.pmgstatic.com/cache/resized/w663/files/images/film/posters/165/649/165649752_9900fa.jpg';" alt="Film 2" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </a>
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <a href="#" class="movie-play-link" data-title="Halloween Končí" data-video-src="https://pf-storage4.premiumcdn.net/151599600/3pOtMRFrMHzZIqZuR2IoAFeoTGbUYVcmeS2lSMguEDIxoC39SVMHd5H43uxqHoQsQXHGZf0ET1gCaDi9wCYOiX4hD7IdgcVwto4i1PSbZHP0iVAub9TMy.mp4?token=9Kv3tL7YfAqC&expires=1762884417&sparams=token%2Cpath%2Cexpires&signature=ce3781ef4f86f3bd8ef7cbb53889452bd3126489">
+                        <img src="https://image.tmdb.org/t/p/w500/xVGN19V60c6I9fB2E21d2P2g10.jpg" onerror="this.onerror=null; this.src='https://image.pmgstatic.com/cache/resized/w663/files/images/film/posters/167/115/167115073_70ec82.jpg';" alt="Film 3" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </a>
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <a href="#" class="movie-play-link" data-title="Populární film 4" data-video-src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
+                        <img src="https://image.tmdb.org/t/p/w500/4nVM3wJbS0tq5S2sS0Wn2TjIfN8.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 4" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </a>
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <a href="#" class="movie-play-link" data-title="Populární film 5" data-video-src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
+                        <img src="https://image.tmdb.org/t/p/w500/A2YquSblv2nNxjG4b8W2pD2pD2N.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 5" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </a>
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <a href="#" class="movie-play-link" data-title="Populární film 6" data-video-src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
+                        <img src="https://image.tmdb.org/t/p/w500/5gM5I5dbB8lrxq8jJd22iC3n7s8.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 6" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Řádek 2 -->
+        <section>
+            <h3 class="text-2xl font-semibold mb-4">Nové epizody</h3>
+            <div class="flex space-x-3 overflow-x-auto overflow-y-hidden hide-scrollbar pb-4">
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <img src="https://image.tmdb.org/t/p/w500/iwsMu0eR3e1gLSbqShtj7tEaA5k.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 7" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <img src="https://image.tmdb.org/t/p/w500/sKEEs4s4nln1sTEMLhSjVzIqK30.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 8" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <img src="https://image.tmdb.org/t/p/w500/3yFfA6cWl3UAGt6SNavt4sN8g2X.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 9" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <!-- TOTO BYLO OPRAVENO: Chybná URL v 'onerror' -->
+                    <img src="https://image.tmdb.org/t/p/w500/8O7bi3qRCHnJvZXvTsfjE8jNYcx.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 10" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <img src="https://image.tmdb.org/t/p/w500/gg2xVaqk0nFmYlG5L4gJgP0mwpA.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 11" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </div>
+                <div class="flex-shrink-0 w-1/3 md:w-1/5 lg:w-1/6">
+                    <img src="https://image.tmdb.org/t/p/w500/apL2YwU6JmN2KB42nNqXWw67tXQ.jpg" onerror="this.onerror=null; this.src='https://placehold.co/300x450/222/555?text=Plak%C3%A1t';" alt="Film 12" class="rounded-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </div>
+            </div>
+        </section>
+
+        <!-- Další řádky -->
+        <section>
+            <h3 class="text-2xl font-semibold mb-4">Sci-Fi a Fantasy</h3>
+            <!-- ... karty ... -->
+        </section>
+        <section>
+            <h3 class="text-2xl font-semibold mb-4">Akční thrillery</h3>
+            <!-- ... karty ... -->
+        </section>
+        <section>
+            <h3 class="text-2xl font-semibold mb-4">Komedie</h3>
+            <!-- ... karty ... -->
+        </section>
+        <section>
+            <h3 class="text-2xl font-semibold mb-4">Horory</h3>
+            <!-- ... karty ... -->
+        </section>
+    </main>
+
+    <!-- Zápatí -->
+    <footer class="mt-20 p-10 border-t border-zinc-800 text-zinc-400">
+        <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+                <h5 class="font-semibold mb-3">Audio a titulky</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="hover:underline">Audio popis</a></li>
+                    <li><a href="#" class="hover:underline">Centrum nápovědy</a></li>
+                    <li><a href="#" class="hover:underline">Dárkové karty</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-semibold mb-3">Média</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="hover:underline">Vztahy s investory</a></li>
+                    <li><a href="#" class="hover:underline">Kariéra</a></li>
+                    <li><a href="#" class="hover:underline">Podmínky použití</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-semibold mb-3">Informace</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="hover:underline">Soukromí</a></li>
+                    <li><a href="#" class="hover:underline">Právní upozornění</a></li>
+                    <li><a href="#" class="hover:underline">Nastavení cookies</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-semibold mb-3">Kontakt</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="hover:underline">Firemní informace</a></li>
+                    <li><a href="#" class="hover:underline">Kontaktujte nás</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="text-center text-sm mt-10">
+            © 2024 DÍVEJ TO, Inc.
+        </div>
+    </footer>
+
+    <!-- Modální okno - Sága Dexter -->
+    <div id="dexter-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
+        <!-- Překrytí -->
+        <div id="modal-overlay" class="absolute inset-0 bg-black/80"></div>
+        
+        <!-- Obsah modálu -->
+        <div class="relative z-10 w-full max-w-3xl h-[80vh] bg-[#181818] rounded-lg shadow-xl transform transition-all duration-300 scale-95 opacity-0 overflow-hidden" id="modal-content">
+            <!-- Zavírací tlačítko -->
+            <button id="close-modal-btn" class="absolute top-4 right-4 z-20 text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+            
+            <!-- Stránka 1: Seznam sérií -->
+            <div id="series-view" class="p-8">
+                <h2 class="text-3xl font-bold mb-6">Sága Dexter</h2>
+                <p class="mb-8 text-gray-300">Vyberte, kterou sérií začít.</p>
+                
+                <!-- Seznam -->
+                <div class="space-y-4">
+                    <a href="#" class="series-select-btn block p-5 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition duration-200" data-target="dexter-episodes">
+                        <h3 class="text-xl font-semibold">Dexter</h3>
+                        <p class="text-sm text-gray-300">Původní seriál (8 sérií)</p>
+                    </a>
+                    <a href="#" class="series-select-btn block p-5 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition duration-200" data-target="new-blood-episodes">
+                        <h3 class="text-xl font-semibold">Dexter: New Blood</h3>
+                        <p class="text-sm text-gray-300">Návrat z roku 2021</p>
+                    </a>
+                    <a href="#" class="series-select-btn block p-5 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition duration-200" data-target="original-sin-episodes">
+                        <h3 class="text-xl font-semibold">Dexter: Original Sin</h3>
+                        <p class="text-sm text-gray-300">Připravovaný prequel</p>
+                    </a>
+                    <a href="#" class="series-select-btn block p-5 rounded-lg bg-zinc-700 hover:bg-zinc-600 transition duration-200" data-target="resurrection-episodes">
+                        <h3 class="text-xl font-semibold">Dexter: Resurrection</h3>
+                        <p class="text-sm text-gray-300">Připravované pokračování 'New Blood'</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stránka 2: Dexter (Originál) Epizody -->
+            <div id="dexter-episodes" class="hidden episode-view absolute top-0 left-0 w-full h-full bg-[#181818] p-8 space-y-4 overflow-y-auto">
+                <button class="back-to-series text-gray-300 hover:text-white mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Zpět na série
+                </button>
+                <h3 class="text-2xl font-bold mb-4">Dexter</h3>
+                
+                <!-- Série 1 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2">Série 1</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E1" data-video-src="https://pf-storage1.premiumcdn.net/154954485/x4MHvRiaqhNKSmZhbEsD2i6YSg7hjQCvmur5cWdUmjCxXsLMHjYFn5IO4tgZSBKSlqIVvS4WuW9hd5uPqHAvtvwfEAtn0UgPsDecEMuz8CnlFdXFpOulB.mp4?token=9Kv3tL7YfAqC&expires=1762879557&sparams=token%2Cpath%2Cexpires&signature=e7ba89bd2f061b680fb90e0500ab4bd6823b7191">
+                        Epizoda 1: Dexter
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E2" data-video-src="https://pf-storage5.premiumcdn.net/154954821/LXNTQAib5HraUZrSBwirwiwEtXVSEbTp4ImEHODTn8Hz6H3Rt0acynFN4u6lhRnC71f50cBPh5bH61TweSgxs6WtEwC0KTEjCxLfBntxju3kIwBTVeunw.mp4?token=9Kv3tL7YfAqC&expires=1762880546&sparams=token%2Cpath%2Cexpires&signature=9e5bc4d10b39950d75ab69d541fbf1a5df22469e">
+                        Epizoda 2: Crocodile (Krokodýl)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E3" data-video-src="https://pf-storage1.premiumcdn.net/154955436/NNwTLxS3RFxnHd3UO6sQMSL4irVsZgHq6CLKcbqfjJUdEU52id7C1EUE4t4bcZKI85TpVtaMhQNT2aC6OI36sJ9tjlcYZIVyt2AUW4TVzC7OcMXfjLhWL.mp4?token=9Kv3tL7YfAqC&expires=1762880806&sparams=token%2Cpath%2Cexpires&signature=7b9d704bf7c88df267072bfb1b8b45e740a5363e">
+                        Epizoda 3: Popping Cherry (Nevinnost)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E4" data-video-src="https://pf-storage1.premiumcdn.net/154955916/OPniy4s8oCdlTW5ixDtE4s8DIg4TKBhrLf5lcdrtv5hqrC29Uzptj3hKZCQKC5rImOU89fvLfepImKfaDh4GsNJuoLc0zcBLFJrHj8c5jfRjHwphrlhL4.mp4?token=9Kv3tL7YfAqC&expires=1762880862&sparams=token%2Cpath%2Cexpires&signature=e2c0aae09894450ba87ed07b53323756c734b952">
+                        Epizoda 4: Let's Give the Boy a Hand (Ruka ruku myje)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E5" data-video-src="https://pf-storage3.premiumcdn.net/43615265/DQEir0UeGIgQukVIpZh6AU8QsQ1s7MhmpsMei6jUYzi16F0xcbBtmRcYaSL9SAkTyRHvYSJXId5T6GfK4sADFqVHbAfwEIdbi5dc4WIL5Ikzc9vfLMtxd.mp4?token=9Kv3tL7YfAqC&expires=1762880901&sparams=token%2Cpath%2Cexpires&signature=bd6b7dec8817a3c33f5c7dfd16e30511bac6fdfe">
+                        Epizoda 5: Love American Style (Láska po americku)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E6" data-video-src="https://pf-storage5.premiumcdn.net/154956408/1raF7aiedh8KUrlUd3tnoiPbcO9FvJTnwsBwF75FjyCq5I9yc1eUkdI0KtrVUqnIYQCEWh1GI7DF5JI02u2jUZ7u07fDPh50CwBI2XULvh7DIg2C8Luv8.mp4?token=9Kv3tL7YfAqC&expires=1762880947&sparams=token%2Cpath%2Cexpires&signature=2007d58efad83da33606d4fb0f9285f139e2beb0">
+                        Epizoda 6: Return to Sender (Vrátit odesílateli)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E7" data-video-src="https://pf-storage5.premiumcdn.net/154956444/dg8Fe0skeh15F0XSKnf6bsNOfQnfAqu73S5kSOmcBLh9bUAYSobfb8cDEuj1fxgHxYSD9cMxSJmhA0FzDhAKfNxceJCAkIWKTe6tv0h5AHbwhJVHXWfwm.mp4?token=9Kv3tL7YfAqC&expires=1762881039&sparams=token%2Cpath%2Cexpires&signature=c31268c901f5cad61d7ed188efe4dfc45e2cb988">
+                        Epizoda 7: Circle of Friends (Kruh přátel)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E8" data-video-src="https://pf-storage4.premiumcdn.net/104665406/0dVFzmf69UdWSX1ikeidwf19HODizvCaWT1QUdkhjpcAWFBGhbrTR2U04C9PcKXuYxHP4izaFr0i1QtaBHokCEzUmdCmlilpH67sWosP5U3xtj1t09uJ3.mp4?token=9Kv3tL7YfAqC&expires=1762881071&sparams=token%2Cpath%2Cexpires&signature=9bdf0c0fa4af3f44e7ae3ab82f7c463f71b1ba2b">
+                        Epizoda 8: Shrink Wrap (Psychiatr)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E9" data-video-src="https://pf-storage4.premiumcdn.net/104666321/gbZuj8iW7c73FEotljfdnizEIBvsWlS2VI0jFY7uQWu79CWbI4lHdbtQLczjIgxhkwUL4uOYhJrtWVU4AuY7ukGs3YCKYfMmsQqsxltdKtVQfg3s4vC0b.mp4?token=9Kv3tL7YfAqC&expires=1762881094&sparams=token%2Cpath%2Cexpires&signature=c92e8e44817df968539ab312d3eea44f03f0a1bd">
+                        Epizoda 9: Father Knows Best (Otec ví nejlíp)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E10" data-video-src="https://pf-storage5.premiumcdn.net/15327871/y0NszLfM9T9OCMZI9mtlnf5jUaKCpmT2augKtAQiYWcZdCjqT6Yu9pCrocnVUzET0jSz1IGMH9KuZkCv9sjwt2EsRYslXT61sywIymun9UMBsYgIpbhGZ.mp4?token=9Kv3tL7YfAqC&expires=1762881133&sparams=token%2Cpath%2Cexpires&signature=fff0c5e0377b54638e886b915a4e603e86b414ca">
+                        Epizoda 10: Seeing Red (Vidět rudě)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E11" data-video-src="https://pf-storage1.premiumcdn.net/154957536/g0qtg0UjotpMTr0hWAcL4Ua4FNwCg6HdwukbfkAtpnHLYiqOHLdubjcqotGaSNbfqmiP5hdpI3niorTljcrwt34sr4cmJuwQSKas0Kia1hp1cl3Sx1hJW.mp4?token=9Kv3tL7YfAqC&expires=1762881196&sparams=token%2Cpath%2Cexpires&signature=d21f9e22ca03866fb10d235273f03386a1b3b03e">
+                        Epizoda 11: Truth Be Told (Prozrazená pravda)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S1: E12" data-video-src="https://pf-storage1.premiumcdn.net/154957536/g0qtg0UjotpMTr0hWAcL4Ua4FNwCg6HdwukbfkAtpnHLYiqOHLdubjcqotGaSNbfqmiP5hdpI3niorTljcrwt34sr4cmJuwQSKas0Kia1hp1cl3Sx1hJW.mp4?token=9Kv3tL7YfAqC&expires=1762881196&sparams=token%2Cpath%2Cexpires&signature=d21f9e22ca03866fb10d235273f03386a1b3b03e">
+                        Epizoda 12: Born Free (Volání krve)
+                    </a>
+                </div>
+
+                <!-- Série 2 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 2</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E1" data-video-src="placeholder.mp4">Epizoda 1: It's Alive! (Je to živé!)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E2" data-video-src="placeholder.mp4">Epizoda 2: Waiting to Exhale (Čekání na výdech)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E3" data-video-src="placeholder.mp4">Epizoda 3: An Inconvenient Lie (Nepohodlná lež)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E4" data-video-src="placeholder.mp4">Epizoda 4: See-Through (Průhledný)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E5" data-video-src="placeholder.mp4">Epizoda 5: The Dark Defender (Temný mstitel)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E6" data-video-src="placeholder.mp4">Epizoda 6: Dex, Lies and Videotape (Dex, lži a video)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E7" data-video-src="placeholder.mp4">Epizoda 7: That Night, a Forest Grew (Té noci vyrostl les)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E8" data-video-src="placeholder.mp4">Epizoda 8: Morning Comes (Přichází ráno)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E9" data-video-src="placeholder.mp4">Epizoda 9: Resistance Is Futile (Odpor je marný)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E10" data-video-src="placeholder.mp4">Epizoda 10: There's Something About Harry (Něco na Harrym je)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E11" data-video-src="placeholder.mp4">Epizoda 11: Left Turn Ahead (Odbočka vlevo)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S2: E12" data-video-src="placeholder.mp4">Epizoda 12: The British Invasion (Britská invaze)</a>
+                </div>
+                
+                <!-- Série 3 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 3</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E1" data-video-src="placeholder.mp4">Epizoda 1: Our Father (Náš otec)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E2" data-video-src="placeholder.mp4">Epizoda 2: Finding Freebo (Hledá se Freebo)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E3" data-video-src="placeholder.mp4">Epizoda 3: The Lion Sleeps Tonight (Lev dnes večer spí)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E4" data-video-src="placeholder.mp4">Epizoda 4: All in the Family (Všechno v rodině)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E5" data-video-src="placeholder.mp4">Epizoda 5: Turning Biminese (Přeměna)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E6" data-video-src="placeholder.mp4">Epizoda 6: Sí, Se Puede (Ano, můžeš)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E7" data-video-src="placeholder.mp4">Epizoda 7: Easy as Pie (Snadné jako facka)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E8" data-video-src="placeholder.mp4">Epizoda 8: The Damage a Man Can Do (Škoda, kterou může člověk napáchat)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E9" data-video-src="placeholder.mp4">Epizoda 9: About Last Night (O včerejší noci)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E10" data-video-src="placeholder.mp4">Epizoda 10: Go Your Own Way (Jdi si svou cestou)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E11" data-video-src="placeholder.mp4">Epizoda 11: I Had a Dream (Měl jsem sen)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S3: E12" data-video-src="placeholder.mp4">Epizoda 12: Do You Take Dexter Morgan? (Berete si Dextera Morgana?)</a>
+                </div>
+
+                <!-- Série 4 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 4</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E1" data-video-src="placeholder.mp4">Epizoda 1: Living the Dream (Žít si svůj sen)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E2" data-video-src="placeholder.mp4">Epizoda 2: Remains to Be Seen (Stále k vidění)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E3" data-video-src="placeholder.mp4">Epizoda 3: Blinded by the Light (Oslněn světlem)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E4" data-video-src="placeholder.mp4">Epizoda 4: Dex Takes a Holiday (Dex si bere dovolenou)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E5" data-video-src="placeholder.mp4">Epizoda 5: Dirty Harry (Drsný Harry)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E6" data-video-src="placeholder.mp4">Epizoda 6: If I Had a Hammer (Kdybych měl kladivo)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E7" data-video-src="placeholder.mp4">Epizoda 7: Slack Tide (Hluché období)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E8" data-video-src="placeholder.mp4">Epizoda 8: Road Kill (Přejetá zvěř)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E9" data-video-src="placeholder.mp4">Epizoda 9: Hungry Man (Hladový muž)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E10" data-video-src="placeholder.mp4">Epizoda 10: Lost Boys (Ztracení chlapci)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E11" data-video-src="placeholder.mp4">Epizoda 11: Hello, Dexter Morgan (Ahoj, Dextere Morgane)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S4: E12" data-video-src="placeholder.mp4">Epizoda 12: The Getaway (Únik)</a>
+                </div>
+
+                <!-- Série 5 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 5</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E1" data-video-src="placeholder.mp4">Epizoda 1: My Bad (Moje chyba)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E2" data-video-src="placeholder.mp4">Epizoda 2: Hello, Bandit (Ahoj, bandito)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E3" data-video-src="placeholder.mp4">Epizoda 3: Practically Perfect (Prakticky dokonalé)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E4" data-video-src="placeholder.mp4">Epizoda 4: Beauty and the Beast (Kráska a zvíře)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E5" data-video-src="placeholder.mp4">Epizoda 5: First Blood (První krev)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E6" data-video-src="placeholder.mp4">Epizoda 6: Everything Is Illumenated (Vše je osvětleno)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E7" data-video-src="placeholder.mp4">Epizoda 7: Circle Us (Okruh nás)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E8" data-video-src="placeholder.mp4">Epizoda 8: Take It! (Vezmi si to!)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E9" data-video-src="placeholder.mp4">Epizoda 9: Teenage Wasteland (Náctiletá pustina)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E10" data-video-src="placeholder.mp4">Epizoda 10: In the Beginning (Na počátku)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E11" data-video-src="placeholder.mp4">Epizoda 11: Hop a Freighter (Naskočit na nákladní loď)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S5: E12" data-video-src="placeholder.mp4">Epizoda 12: The Big One (Ta velká)</a>
+                </div>
+
+                <!-- Série 6 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 6</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E1" data-video-src="placeholder.mp4">Epizoda 1: Those Kinds of Things (Ten typ věcí)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E2" data-video-src="placeholder.mp4">Epizoda 2: Once Upon a Time... (Bylo, nebylo...)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E3" data-video-src="placeholder.mp4">Epizoda 3: Smokey and the Bandit (Polda a bandita)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E4" data-video-src="placeholder.mp4">Epizoda 4: A Horse of a Different Color (Kůň jiné barvy)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E5" data-video-src="placeholder.mp4">Epizoda 5: The Angel of Death (Anděl smrti)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E6" data-video-src="placeholder.mp4">Epizoda 6: Just Let Go (Prostě to nech plavat)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E7" data-video-src="placeholder.mp4">Epizoda 7: Nebraska</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E8" data-video-src="placeholder.mp4">Epizoda 8: Sin of Omission (Hřích opomenutí)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E9" data-video-src="placeholder.mp4">Epizoda 9: Get Gellar (Dostat Gellara)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E10" data-video-src="placeholder.mp4">Epizoda 10: Ricochet Rabbit (Skočný králík)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E11" data-video-src="placeholder.mp4">Epizoda 11: Talk to the Hand (Mluv si do ruky)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S6: E12" data-video-src="placeholder.mp4">Epizoda 12: This Is the Way the World Ends (Takhle končí svět)</a>
+                </div>
+
+                <!-- Série 7 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 7</h4>
+                <div class="space-y-3">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E1" data-video-src="placeholder.mp4">Epizoda 1: Are You...? (Jsi...?)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E2" data-video-src="placeholder.mp4">Epizoda 2: Sunshine and Frosty Swirl (Sluneční svit a mrazivý vír)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E3" data-video-src="placeholder.mp4">Epizoda 3: Buck the System (Vzepřít se systému)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E4" data-video-src="placeholder.mp4">Epizoda 4: Run (Běž)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E5" data-video-src="placeholder.mp4">Epizoda 5: Swim Deep (Plavat hluboko)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E6" data-video-src="placeholder.mp4">Epizoda 6: Do the Wrong Thing (Udělat špatnou věc)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E7" data-video-src="placeholder.mp4">Epizoda 7: Chemistry (Chemie)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E8" data-video-src="placeholder.mp4">Epizoda 8: Argentina</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E9" data-video-src="placeholder.mp4">Epizoda 9: Helter Skelter (Zmatek)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E10" data-video-src="placeholder.mp4">Epizoda 10: The Dark... Whatever (Temný... cokoliv)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E11" data-video-src="placeholder.mp4">Epizoda 11: Do You See What I See? (Vidíš to, co já?)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S7: E12" data-video-src="placeholder.mp4">Epizoda 12: Surprise, Motherf**ker! (Překvapení, parchante!)</a>
+                </div>
+                
+                <!-- Série 8 -->
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2 mt-6">Série 8</h4>
+                <div class="space-y-3 pb-12">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E1" data-video-src="placeholder.mp4">Epizoda 1: A Beautiful Day (Krásný den)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E2" data-video-src="placeholder.mp4">Epizoda 2: Every Silver Lining... (Každý mráček...)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E3" data-video-src="placeholder.mp4">Epizoda 3: What's Eating Dexter Morgan? (Co žere Dextera Morgana?)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E4" data-video-src="placeholder.mp4">Epizoda 4: Scar Tissue (Jizva)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E5" data-video-src="placeholder.mp4">Epizoda 5: This Little Piggy (Tohle prasátko)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E6" data-video-src="placeholder.mp4">Epizoda 6: A LittleReflection (Malá reflexe)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E7" data-video-src="placeholder.mp4">Epizoda 7: Dress Code (Pravidla oblékání)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E8" data-video-src="placeholder.mp4">Epizoda 8: Are We There Yet? (Už tam budeme?)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E9" data-video-src="placeholder.mp4">Epizoda 9: Make Your Own Kind of Music (Vytvoř si svou vlastní hudbu)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E10" data-video-src="placeholder.mp4">Epizoda 10: Goodbye Miami (Sbohem, Miami)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E11" data-video-src="placeholder.mp4">Epizoda 11: Monkey in a Box (Opice v krabici)</a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Dexter - S8: E12" data-video-src="placeholder.mp4">Epizoda 12: Remember the Monsters? (Pamatuješ na monstra?)</a>
+                </div>
+            </div>
+
+            <!-- Stránka 3: New Blood Epizody -->
+            <div id="new-blood-episodes" class="hidden episode-view absolute top-0 left-0 w-full h-full bg-[#181818] p-8 space-y-4 overflow-y-auto">
+                <button class="back-to-series text-gray-300 hover:text-white mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Zpět na série
+                </button>
+                <h3 class="text-2xl font-bold mb-4">Dexter: New Blood</h3>
+                
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2">Série 1</h4>
+                <div class="space-y-3 pb-12">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E1" data-video-src="https://pf-storage3.premiumcdn.net/72699995/5gbhr6Fx4IjaHDXc56tlaF79SJjtENSyMSVvS07S3pSgEuxQsrghRYuozu6vSDvSJ2Tr5CqLsd2UNvsqKfEqhlzS50Ib1IrvUQKsa9TB0C6KfVxtd4iD3.mp4?token=9Kv3tL7YfAqC&expires=1762881349&sparams=token%2Cpath%2Cexpires&signature=f71a25c2cb643b3ee2b911a08125feb1f3b8c210">
+                        Epizoda 1: Cold Snap (Mrazivé počasí)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E2" data-video-src="https://pf-storage1.premiumcdn.net/155055465/knKubNI27I95CwDSeohADI5RcRohW4clgtawfd4c9xTDVukLCMxUbQC3lfPAHWzsoECYJcP1CqAfV6skNidru7Li0xfE3HwoFrJCN0i2LimECgGCE3cgR.mp4?token=9Kv3tL7YfAqC&expires=1762881483&sparams=token%2Cpath%2Cexpires&signature=733c85205e775580a483d4466bcdffff8b02cf7f">
+                        Epizoda 2: Storm of F*ck (Pos*aná bouře)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E3" data-video-src="https://pf-storage4.premiumcdn.net/73740950/Mm9iXeIy3UPBfoATXDHpNImru8biRWU8ZiGdFvgfr4cbGfz4HMVI4nT2PUexUaeUAWUdqHomUpgC60sG1IJBiDncA7hv3Tbafk7TpmsWbsOBirMU3pFeV.mp4?token=9Kv3tL7YfAqC&expires=1762881566&sparams=token%2Cpath%2Cexpires&signature=f18b901ae25ca13f6cdc02848e20d7194b39a897">
+                        Epizoda 3: Smoke Signals (Kouřové signály)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E4" data-video-src="https://pf-storage5.premiumcdn.net/73660571/NEPsrZS8qugATodH8zidASyDTb3uQ6f68FYPuDEtayhWVskDhOqI4rTgYsmbtykueMcX5umQuApCveHQrt6DivlHQohg5C43TjycWrcarC64CW2I5jIzl.mp4?token=9Kv3tL7YfAqC&expires=1762881658&sparams=token%2Cpath%2Cexpires&signature=26deda31d4d6826f3f97362be2ddfb61ceb08944">
+                        Epizoda 4: 'H' is for Hero ('H' jako hrdina)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E5" data-video-src="https://pf-storage4.premiumcdn.net/73272857/kZ6FQpSQWsW9IVdT93UYySWxHDlc9lfprCdYiNxH1XFdoh2gCBvhx1UGruR6CrmtE7h6BuEOuaLTMbc08Uv0Ib9U60TKxt10TglI1lfK0F3ECeztKjsM4.mp4?token=9Kv3tL7YfAqC&expires=1762881702&sparams=token%2Cpath%2Cexpires&signature=9bcf62e62da3bb3b30375c0ffe9dd0c0ddb42366">
+                        Epizoda 5: Runaway (Uprchlík)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E6" data-video-src="placeholder.mp4">
+                        Epizoda 6: Too Many Tuna Sandwiches (Příliš mnoho tuňákových sendvičů)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E7" data-video-src="placeholder.mp4">
+                        Epizoda 7: Skin of Her Teeth (O vlásek)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E8" data-video-src="placeholder.mp4">
+                        Epizoda 8: Unfair Game (Nefér hra)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E9" data-video-src="placeholder.mp4">
+                        Epizoda 9: The Family Business (Rodinný podnik)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="New Blood - S1: E10" data-video-src="placeholder.mp4">
+                        Epizoda 10: Sins of the Father (Hříchy otce)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stránka 4: Original Sin Epizody -->
+            <div id="original-sin-episodes" class="hidden episode-view absolute top-0 left-0 w-full h-full bg-[#181818] p-8 space-y-4 overflow-y-auto">
+                <button class="back-to-series text-gray-300 hover:text-white mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Zpět na série
+                </button>
+                <h3 class="text-2xl font-bold mb-4">Dexter: Original Sin</h3>
+                
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2">Série 1</h4>
+                <div class="space-y-3 pb-12">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E1" data-video-src="placeholder.mp4">
+                        Epizoda 1 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E2" data-video-src="placeholder.mp4">
+                        Epizoda 2 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E3" data-video-src="placeholder.mp4">
+                        Epizoda 3 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E4" data-video-src="placeholder.mp4">
+                        Epizoda 4 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E5" data-video-src="placeholder.mp4">
+                        Epizoda 5 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E6" data-video-src="placeholder.mp4">
+                        Epizoda 6 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E7" data-video-src="placeholder.mp4">
+                        Epizoda 7 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E8" data-video-src="placeholder.mp4">
+                        Epizoda 8 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E9" data-video-src="placeholder.mp4">
+                        Epizoda 9 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Original Sin - S1: E10" data-video-src="placeholder.mp4">
+                        Epizoda 10 (bude oznámeno)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stránka 5: Resurrection Epizody -->
+            <div id="resurrection-episodes" class="hidden episode-view absolute top-0 left-0 w-full h-full bg-[#181818] p-8 space-y-4 overflow-y-auto">
+                <button class="back-to-series text-gray-300 hover:text-white mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Zpět na série
+                </button>
+                <h3 class="text-2xl font-bold mb-4">Dexter: Resurrection</h3>
+                
+                <h4 class="text-lg font-semibold text-gray-300 border-b border-gray-600 pb-2">Série 1</h4>
+                <div class="space-y-3 pb-12">
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E1" data-video-src="placeholder.mp4">
+                        Epizoda 1 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E2" data-video-src="placeholder.mp4">
+                        Epizoda 2 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E3" data-video-src="placeholder.mp4">
+                        Epizoda 3 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E4" data-video-src="placeholder.mp4">
+                        Epizoda 4 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E5" data-video-src="placeholder.mp4">
+                        Epizoda 5 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E6" data-video-src="placeholder.mp4">
+                        Epizoda 6 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E7" data-video-src="placeholder.mp4">
+                        Epizoda 7 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E8" data-video-src="placeholder.mp4">
+                        Epizoda 8 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E9" data-video-src="placeholder.mp4">
+                        Epizoda 9 (bude oznámeno)
+                    </a>
+                    <a href="#" class="dexter-series-link block p-4 rounded-lg bg-zinc-700 hover:bg-zinc-600" data-title="Resurrection - S1: E10" data-video-src="placeholder.mp4">
+                        Epizoda 10 (bude oznámeno)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Obrazovka přehrávače videa -->
+    <div id="player-screen" class="hidden fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-black/95 transition-opacity duration-300 opacity-0">
+        <!-- Horní lišta přehrávače -->
+        <div class="absolute top-4 left-4 right-4 z-20 flex items-center justify-between">
+            <!-- Tlačítko Zpět (nahrazuje staré zavírací) -->
+            <button id="close-player-btn" class="text-gray-300 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            
+            <!-- Titulek přehrávače -->
+            <h3 id="player-title" class="text-lg md:text-2xl font-semibold text-white"></h3>
+
+            <!-- Prázdný div pro zarovnání -->
+            <div class="w-8"></div>
+        </div>
+
+        <!-- Kontejner přehrávače (s tlačítky) -->
+        <div id="video-container" class="relative w-full max-w-6xl group" style="aspect-ratio: 16 / 9;">
+            <video id="video-player" class="w-full h-full bg-black rounded-lg shadow-xl" controls>
+                <!-- Zdroj videa bude nastaven dynamicky -->
+                <source src="" type="video/mp4">
+                Váš prohlížeč nepodporuje video tag.
+            </video>
+
+            <!-- Tlačítko Předchozí epizoda -->
+            <button id="prev-episode-btn" class="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 z-30 p-2 md:p-3 bg-black/40 rounded-full text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+
+            <!-- Tlačítko Další epizoda -->
+            <button id="next-episode-btn" class="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 z-30 p-2 md:p-3 bg-black/40 rounded-full text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navbar = document.getElementById('navbar');
+            const playButton = document.getElementById('play-dexter-btn');
+            
+            // Elementy modálu
+            const modal = document.getElementById('dexter-modal');
+            const modalContent = document.getElementById('modal-content');
+            const closeModalButton = document.getElementById('close-modal-btn');
+            const modalOverlay = document.getElementById('modal-overlay');
+
+            // Elementy přehrávače
+            const playerScreen = document.getElementById('player-screen');
+            const closePlayerBtn = document.getElementById('close-player-btn');
+            const videoPlayer = document.getElementById('video-player');
+            const playerTitle = document.getElementById('player-title');
+            const prevEpisodeBtn = document.getElementById('prev-episode-btn');
+            const nextEpisodeBtn = document.getElementById('next-episode-btn');
+            
+            // Elementy stránek modálu
+            const seriesView = document.getElementById('series-view');
+            const episodeViews = document.querySelectorAll('.episode-view');
+            const seriesSelectBtns = document.querySelectorAll('.series-select-btn');
+            const backToSeriesBtns = document.querySelectorAll('.back-to-series');
+            const episodePlayLinks = document.querySelectorAll('.dexter-series-link');
+            const moviePlayLinks = document.querySelectorAll('.movie-play-link'); // NOVÝ VÝBĚR
+
+            // Stav přehrávače
+            let currentEpisodeList = [];
+            let currentEpisodeIndex = -1;
+
+            // --- Efekt scrollu navigační lišty ---
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('bg-brand-darker', 'shadow-lg');
+                } else {
+                    navbar.classList.remove('bg-brand-darker', 'shadow-lg');
+                }
+            });
+
+            // --- Logika modálu ---
+            const showModal = () => {
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.classList.add('opacity-100');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                });
+            };
+
+            const hideModal = () => {
+                modalContent.classList.add('scale-95', 'opacity-0');
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modal.classList.remove('opacity-100');
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    // Resetovat modál na první stránku
+                    seriesView.classList.remove('hidden');
+                    episodeViews.forEach(view => view.classList.add('hidden'));
+                    // Resetovat scroll
+                    episodeViews.forEach(view => {
+                        view.scrollTop = 0;
+                    });
+                }, 300);
+            };
+
+            // --- Logika přehrávače ---
+
+            const updatePlayerButtons = () => {
+                // Zobrazit/skrýt tlačítko DALŠÍ
+                if (currentEpisodeIndex > -1 && currentEpisodeIndex < currentEpisodeList.length - 1) {
+                    nextEpisodeBtn.classList.remove('hidden');
+                } else {
+                    nextEpisodeBtn.classList.add('hidden');
+                }
+                // Zobrazit/skrýt tlačítko PŘEDCHOZÍ
+                if (currentEpisodeIndex > 0) {
+                    prevEpisodeBtn.classList.remove('hidden');
+                } else {
+                    prevEpisodeBtn.classList.add('hidden');
+                }
+            };
+            
+            // ZMĚNA: Funkce nyní přijímá objekt
+            const showPlayer = ({ title, videoSrc, linkElement = null }) => {
+                
+                const parentView = linkElement ? linkElement.closest('.episode-view') : null;
+
+                if (parentView) {
+                     // Je to epizoda ze seznamu
+                    currentEpisodeList = Array.from(parentView.querySelectorAll('.dexter-series-link'));
+                    currentEpisodeIndex = currentEpisodeList.indexOf(linkElement);
+                } else {
+                    // Je to generický film (např. z "Populární")
+                    currentEpisodeList = [];
+                    currentEpisodeIndex = -1;
+                }
+                
+                hideModal();
+                playerTitle.textContent = `Právě hraje: ${title}`;
+                
+                const finalVideoSrc = (videoSrc === 'placeholder.mp4' || !videoSrc) 
+                    ? 'video.mp4' 
+                    : videoSrc;
+
+                if (videoPlayer.src !== finalVideoSrc) {
+                     videoPlayer.src = finalVideoSrc;
+                }
+                
+                playerScreen.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    playerScreen.classList.add('opacity-100');
+                });
+                
+                videoPlayer.load();
+                videoPlayer.play().catch(error => {
+                    console.warn("Automatické přehrávání videa bylo zablokováno.", error);
+                });
+
+                updatePlayerButtons();
+            };
+
+            const hidePlayer = () => {
+                videoPlayer.pause();
+                videoPlayer.src = ""; // Uvolnit zdroj
+                
+                currentEpisodeList = [];
+                currentEpisodeIndex = -1;
+
+                playerScreen.classList.add('opacity-0');
+                playerScreen.classList.remove('opacity-100');
+                
+                setTimeout(() => {
+                    playerScreen.classList.add('hidden');
+                }, 300);
+            };
+
+
+            // --- Posluchače událostí ---
+
+            // Otevřít modál
+            if (playButton) {
+                playButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showModal();
+                });
+            }
+
+            // Zavřít modál
+            if (closeModalButton) {
+                closeModalButton.addEventListener('click', hideModal);
+            }
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', hideModal);
+            }
+
+            // Zavřít modál nebo přehrávač klávesou Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (!playerScreen.classList.contains('hidden')) {
+                        hidePlayer();
+                    } else if (!modal.classList.contains('hidden')) {
+                        hideModal();
+                    }
+                }
+            });
+
+            // --- Navigace v modálu ---
+
+            // 1. Kliknutí na seznam SÉRIÍ
+            seriesSelectBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = btn.getAttribute('data-target');
+                    const targetPage = document.getElementById(targetId);
+
+                    if (targetPage) {
+                        seriesView.classList.add('hidden');
+                        targetPage.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // 2. Kliknutí na tlačítko "Zpět"
+            backToSeriesBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    btn.closest('.episode-view').classList.add('hidden');
+                    seriesView.classList.remove('hidden');
+                });
+            });
+
+
+            // 3. Kliknutí na odkaz EPIZODY (přehrát video)
+            episodePlayLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const title = link.getAttribute('data-title') || 'Video';
+                    const videoSrc = link.getAttribute('data-video-src');
+                    // Předat objekt s detaily
+                    showPlayer({ title, videoSrc, linkElement: link });
+                });
+            });
+
+            // 4. NOVÉ: Kliknutí na odkaz FILMU (přehrát video)
+            moviePlayLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const title = link.getAttribute('data-title') || 'Video';
+                    const videoSrc = link.getAttribute('data-video-src');
+                    // Přehrát video bez kontextu série (linkElement: null)
+                    showPlayer({ title, videoSrc, linkElement: null });
+                });
+            });
+
+            // --- Ovládání přehrávače ---
+
+            // Zavřít přehrávač
+            if (closePlayerBtn) {
+                closePlayerBtn.addEventListener('click', hidePlayer);
+            }
+
+            // Tlačítko Další epizoda
+            nextEpisodeBtn.addEventListener('click', () => {
+                if (currentEpisodeIndex < currentEpisodeList.length - 1) {
+                    currentEpisodeIndex++;
+                    const nextLink = currentEpisodeList[currentEpisodeIndex];
+                    const title = nextLink.getAttribute('data-title') || 'Video';
+                    const videoSrc = nextLink.getAttribute('data-video-src');
+                    showPlayer({ title, videoSrc, linkElement: nextLink });
+                }
+            });
+
+            // Tlačítko Předchozí epizoda
+            prevEpisodeBtn.addEventListener('click', () => {
+                if (currentEpisodeIndex > 0) {
+                    currentEpisodeIndex--;
+                    const prevLink = currentEpisodeList[currentEpisodeIndex];
+                    const title = prevLink.getAttribute('data-title') || 'Video';
+                    const videoSrc = prevLink.getAttribute('data-video-src');
+                    showPlayer({ title, videoSrc, linkElement: prevLink });
+                }
+            });
+
+        });
+    </script>
+
+</body>
+</html>
